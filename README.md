@@ -11,7 +11,7 @@ Pode utilizar qualquer API para conversão de valores, utilizando a API: https:/
 * Formas de pagamento (taxas aplicadas no valor da compra e aceitar apenas as opções abaixo)
 * Para pagamentos em boleto, taxa de 1,45%
 * Para pagamentos em cartão de crédito, taxa de 7,63%
-* Aplicar taxa de 2% pela conversão para valores abaixo de R$ 3.000,00 e 1% para valores maiores que R$ 3.000,00,
+* Aplicar taxa de 2% pela conversão para valores abaixo de 3000.00 e  1 % para valores maiores que 3000.00,
 essa taxa deve ser aplicada apenas no valor da compra e não sobre o valor já com a taxa de forma de pagamento.
 
 # Tecnologias Utilizadas
