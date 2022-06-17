@@ -7,7 +7,7 @@ Pode utilizar qualquer API para conversão de valores, utilizando a API: https:/
 
 * Moeda de origem BRL;
 * Informar uma moeda de compra que não seja BRL (exibir no mínimo 2 opções);
-* Valor da Compra em BRL (deve ser maior que R$ 1.000,00 e menor que R$ 100.000,00)
+* Valor da Compra em BRL (deve ser maior que 1000.00 e menor que 100000.00)
 * Formas de pagamento (taxas aplicadas no valor da compra e aceitar apenas as opções abaixo)
 * Para pagamentos em boleto, taxa de 1,45%
 * Para pagamentos em cartão de crédito, taxa de 7,63%
