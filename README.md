@@ -5,15 +5,13 @@ Pode utilizar qualquer API para conversão de valores, utilizando a API: https:/
 
 # Regras de négocio
 
-Moeda de origem BRL;
-Informar uma moeda de compra que não seja BRL (exibir no mínimo 2 opções);
-Valor da Compra em BRL (deve ser maior que R$ 1.000,00 e menor que R$ 100.000,00)
-Formas de pagamento (taxas aplicadas no valor da compra e aceitar apenas as opções abaixo)
-
-Para pagamentos em boleto, taxa de 1,45%
-Para pagamentos em cartão de crédito, taxa de 7,63%
-
-Aplicar taxa de 2% pela conversão para valores abaixo de R$ 3.000,00 e 1% para valores maiores que R$ 3.000,00,
+* Moeda de origem BRL;
+* Informar uma moeda de compra que não seja BRL (exibir no mínimo 2 opções);
+* Valor da Compra em BRL (deve ser maior que R$ 1.000,00 e menor que R$ 100.000,00)
+* Formas de pagamento (taxas aplicadas no valor da compra e aceitar apenas as opções abaixo)
+* Para pagamentos em boleto, taxa de 1,45%
+* Para pagamentos em cartão de crédito, taxa de 7,63%
+* Aplicar taxa de 2% pela conversão para valores abaixo de R$ 3.000,00 e 1% para valores maiores que R$ 3.000,00,
 essa taxa deve ser aplicada apenas no valor da compra e não sobre o valor já com a taxa de forma de pagamento.
 
 # Tecnologias Utilizadas
