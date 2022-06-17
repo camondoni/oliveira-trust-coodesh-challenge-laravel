@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: oliveira
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: currency-converter
+    container_name: laravel-react
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    network_mode: bridge
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+

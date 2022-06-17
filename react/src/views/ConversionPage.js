@@ -1,36 +1,33 @@
-import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
-import Select from "@mui/material/Select";
-import InputLabel from "@mui/material/InputLabel";
 import CurrencyTextField from "@unicef/material-ui-currency-textfield";
-import FormControl from "@mui/material/FormControl";
 import { currencies } from "../helpers/Currencies";
 import { useEffect, useState } from "react";
-import Radio from "@mui/material/Radio";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
-import Container from "@mui/material/Container";
-import Avatar from "@mui/material/Avatar";
-import Tooltip from "@mui/material/Tooltip";
-import MenuItem from "@mui/material/MenuItem";
-import AdbIcon from "@mui/icons-material/Adb";
+import logo from "../img/oliveira_trust.png";
 
 import {
+    Box,
+    Grid,
+    Select,
+    InputLabel,
+    FormControl,
+    Radio,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Dialog,
+    Toolbar,
+    IconButton,
+    Container,
+    MenuItem,
     AppBar,
     Button,
     ButtonGroup,
     Card,
     CardContent,
+    CircularProgress,
     FormControlLabel,
     FormLabel,
     RadioGroup,
@@ -54,18 +51,44 @@ const toastProps = {
     closeOnClick: true,
     pauseOnHover: true,
     draggable: true,
-    progress: undefined,
+};
+
+const spin = {
+    content: "",
+    display: "block",
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    zIndex: "9999",
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
 };
 
 export const ConversionPage = () => {
+    const [spinner, setSpinner] = useState(false);
+    const [configBoletoFee, setConfigBoletoFee] = useState("");
+    const [configCreditCardFee, setConfigCreditCardFee] = useState("");
+    const [configMinValueFee, setConfigMinValueFee] = useState("");
+    const [configMaxValueFee, setConfigMaxValueFee] = useState("");
+    const [feeDialogOpen, setFeeDialogOpen] = useState(false);
+    const [cotation, setCotation] = useState({
+        originCurrency: "",
+        destinationCurrency: "",
+        conversionAmount: "",
+        paymentMethod: "",
+        currencyDestinyValue: "",
+        purchaseAmount: "",
+        paymentMethodFee: "",
+        conversionFee: "",
+        conversionWithFee: "",
+    });
     const [loginEmail, setLoginEmail] = useState("");
     const [registerEmail, setRegisterEmail] = useState("");
-    const [name, setName] = useState("");
+    const [registerName, setRegisterName] = useState("");
+    const [registerPassword, setRegisterPassword] = useState("");
     const [userName, setUserName] = useState(localStorage.getItem("userName"));
     const [loginPassword, setLoginPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [currency, setCurrency] = useState("");
-    const [symbol, setSymbol] = useState("");
     const [amount, setAmount] = useState("0.00");
     const [paymentMethod, setPaymentMethod] = useState("credit");
     const [minValueFee, setMinValueFee] = useState("0.00");
@@ -74,14 +97,13 @@ export const ConversionPage = () => {
     const [creditCardFee, setCreditCardFee] = useState("0.00");
     const [jwtToken, setJwtToken] = useState(localStorage.getItem("token"));
     const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-    const handleCurrencyChange = (currency) => {
-        const symbol = currency.split(";")[1];
-        setCurrency(currency);
-        setSymbol(symbol);
-    };
 
     const handleLoginDialogClose = () => {
         setLoginDialogOpen(!loginDialogOpen);
+    };
+
+    const handleFeeDialogClose = () => {
+        setFeeDialogOpen(!feeDialogOpen);
     };
 
     useEffect(() => {
@@ -90,17 +112,104 @@ export const ConversionPage = () => {
 
     const getFees = () => {
         axios
-            .get("http://127.0.0.1:8000/api/cotation_fee")
+            .get(process.env.REACT_APP_LARAVEL_URL + "/api/cotation_fee")
             .then(function (response) {
                 setBoletoFee(response.data.data.boleto_fee);
                 setCreditCardFee(response.data.data.credit_card_fee);
                 setMinValueFee(response.data.data.min_value_fee);
                 setMaxValueFee(response.data.data.max_value_fee);
+
+                setConfigBoletoFee(response.data.data.boleto_fee);
+                setConfigCreditCardFee(response.data.data.credit_card_fee);
+                setConfigMinValueFee(response.data.data.min_value_fee);
+                setConfigMaxValueFee(response.data.data.max_value_fee);
             });
     };
 
+    const handleMakeCotation = () => {
+        const headers = { headers: { Authorization: `Bearer ${jwtToken}` } };
+
+        const request = {
+            originCurrency: "BRL",
+            destinationCurrency: currency,
+            conversionAmount: amount,
+            paymentMethod: paymentMethod,
+        };
+        setSpinner(true);
+        axios
+            .post(
+                process.env.REACT_APP_LARAVEL_URL + "/api/make_cotation",
+                request,
+                headers
+            )
+            .then(function (request) {
+                setCotation(request.data.data);
+                toast.success("Cotação realizada com sucesso", toastProps);
+            })
+            .catch(function (error) {
+                toast.error(error.response.data.errorsMessage[0], toastProps);
+            })
+            .finally(() => {
+                setSpinner(false);
+            });
+    };
+
+    const handleDisabledMakeCotation = () => {
+        console.log(jwtToken);
+
+        if (
+            currency === "" ||
+            jwtToken === "" ||
+            jwtToken === null ||
+            amount === "0.00" ||
+            amount === ""
+        )
+            return true;
+
+        return false;
+    };
+
     const handleRegister = () => {
-        const request = {};
+        if (registerPassword !== confirmPassword) {
+            toast.error("Campo senha invalido", toastProps);
+            return null;
+        }
+
+        if (registerEmail === "") {
+            toast.error("Campo email obrigatório", toastProps);
+            return null;
+        }
+
+        if (registerPassword === "") {
+            toast.error("Campo senha obrigatório", toastProps);
+            return null;
+        }
+
+        if (registerName === "") {
+            toast.error("Campo nome completo obrigatório", toastProps);
+            return null;
+        }
+
+        const request = {
+            email: registerEmail,
+            password: registerPassword,
+            name: registerName,
+        };
+        setSpinner(true);
+        axios
+            .post(process.env.REACT_APP_LARAVEL_URL + "/api/register", request)
+            .then(function () {
+                toast.success("Cadastro realizado com sucesso", toastProps);
+                setRegisterEmail("");
+                setRegisterPassword("");
+                setRegisterName("");
+            })
+            .catch(function (error) {
+                toast.error(error.response.data.errorMessages[0], toastProps);
+            })
+            .finally(() => {
+                setSpinner(false);
+            });
     };
 
     const handleLogin = () => {
@@ -108,9 +217,9 @@ export const ConversionPage = () => {
             email: loginEmail,
             password: loginPassword,
         };
-
+        setSpinner(true);
         axios
-            .post("http://127.0.0.1:8000/api/login", request)
+            .post(process.env.REACT_APP_LARAVEL_URL + "/api/login", request)
             .then(function (response) {
                 localStorage.setItem("token", response.data.token);
                 localStorage.setItem("userName", response.data.userName);
@@ -121,19 +230,54 @@ export const ConversionPage = () => {
             })
             .catch(function (error) {
                 toast.error(error.response.data.message, toastProps);
+            })
+            .finally(() => {
+                setSpinner(false);
             });
     };
 
     const handleLogout = () => {
-        localStorage.setItem("token", null);
-        localStorage.setItem("userName", null);
-        setJwtToken(null);
-        setUserName(null);
+        setJwtToken("");
+        setUserName("");
+        localStorage.clear();
+    };
+
+    const handleFeeSave = () => {
+        const headers = { headers: { Authorization: `Bearer ${jwtToken}` } };
+        const request = {
+            creditCardFee: configCreditCardFee,
+            boletoFee: configBoletoFee,
+            minValueFee: configMinValueFee,
+            maxValueFee: configMaxValueFee,
+        };
+        setSpinner(true);
+        axios
+            .put(
+                process.env.REACT_APP_LARAVEL_URL + "/api/cotation_fee",
+                request,
+                headers
+            )
+            .then(function (response) {
+                setCreditCardFee(configCreditCardFee);
+                setBoletoFee(configBoletoFee);
+                setMinValueFee(configMinValueFee);
+                setMaxValueFee(configMaxValueFee);
+                setFeeDialogOpen(false);
+                toast.success("Taxas salva com sucesso!", toastProps);
+            })
+            .catch(function (error) {
+                toast.error(error.response.data.errorsMessage[0], toastProps);
+            })
+            .finally(() => {
+                setSpinner(false);
+            });
     };
 
     return (
         <>
             <div>
+                {spinner && <CircularProgress style={spin} disableShrink />}
+
                 <ToastContainer />
                 <Dialog open={loginDialogOpen} onClose={handleLoginDialogClose}>
                     <DialogTitle>Login</DialogTitle>
@@ -186,8 +330,12 @@ export const ConversionPage = () => {
                             <Grid item xs={12}>
                                 <TextField
                                     margin="dense"
-                                    id="name"
+                                    id="reg_name"
                                     label="Nome Completo"
+                                    required
+                                    onChange={(event) =>
+                                        setRegisterName(event.target.value)
+                                    }
                                     type="text"
                                     fullWidth
                                     variant="standard"
@@ -198,7 +346,11 @@ export const ConversionPage = () => {
                                     margin="dense"
                                     id="reg_email"
                                     label="Email"
+                                    required
                                     type="email"
+                                    onChange={(event) =>
+                                        setRegisterEmail(event.target.value)
+                                    }
                                     fullWidth
                                     variant="standard"
                                 />
@@ -208,8 +360,12 @@ export const ConversionPage = () => {
                                     margin="dense"
                                     id="reg_password"
                                     label="Senha"
+                                    required
                                     type="password"
                                     fullWidth
+                                    onChange={(event) =>
+                                        setRegisterPassword(event.target.value)
+                                    }
                                     variant="standard"
                                 />
                             </Grid>
@@ -217,15 +373,19 @@ export const ConversionPage = () => {
                                 <TextField
                                     margin="dense"
                                     id="confirm_password"
+                                    required
                                     label="Confirme sua senha"
                                     type="password"
+                                    onChange={(event) =>
+                                        setConfirmPassword(event.target.value)
+                                    }
                                     fullWidth
                                     variant="standard"
                                 />
                             </Grid>
                             <Grid item xs={12}>
                                 <Button
-                                    onClick={handleLoginDialogClose}
+                                    onClick={handleRegister}
                                     variant="contained"
                                     fullWidth
                                 >
@@ -236,6 +396,105 @@ export const ConversionPage = () => {
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleLoginDialogClose}>Fechar</Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog open={feeDialogOpen} onClose={handleFeeDialogClose}>
+                    <DialogTitle>Configuração de Taxas</DialogTitle>
+                    <DialogContent>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <FormControl fullWidth sx={{ m: 1 }}>
+                                    <CurrencyTextField
+                                        label={`Taxa de Cartão de Crédito`}
+                                        fullWidth
+                                        variant="standard"
+                                        value={configCreditCardFee}
+                                        currencySymbol={"%"}
+                                        minimumValue="1.00"
+                                        maximumValue="100.00"
+                                        position="end"
+                                        outputFormat="number"
+                                        onChange={(event) =>
+                                            setConfigCreditCardFee(
+                                                event.target.value
+                                            )
+                                        }
+                                        decimalCharacter="."
+                                        digitGroupSeparator=""
+                                    />
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <FormControl fullWidth sx={{ m: 1 }}>
+                                    <CurrencyTextField
+                                        label={`Taxa de Boleto`}
+                                        fullWidth
+                                        variant="standard"
+                                        value={configBoletoFee}
+                                        currencySymbol={"%"}
+                                        minimumValue="1.00"
+                                        maximumValue="100.00"
+                                        position="end"
+                                        outputFormat="number"
+                                        onChange={(event) =>
+                                            setConfigBoletoFee(
+                                                event.target.value
+                                            )
+                                        }
+                                        decimalCharacter="."
+                                        digitGroupSeparator=""
+                                    />
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <CurrencyTextField
+                                    label={`Taxa de valor minimo(abaixo de 3000.00)`}
+                                    fullWidth
+                                    variant="standard"
+                                    value={configMinValueFee}
+                                    currencySymbol={"%"}
+                                    minimumValue="1.00"
+                                    maximumValue="100.00"
+                                    position="end"
+                                    outputFormat="number"
+                                    onChange={(event) =>
+                                        setConfigMinValueFee(event.target.value)
+                                    }
+                                    decimalCharacter="."
+                                    digitGroupSeparator=""
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <CurrencyTextField
+                                    label={`Taxa de valor máximo(acima de 3000.00)`}
+                                    fullWidth
+                                    variant="standard"
+                                    value={configMaxValueFee}
+                                    currencySymbol={"%"}
+                                    minimumValue="1.00"
+                                    maximumValue="100.00"
+                                    position="end"
+                                    outputFormat="number"
+                                    onChange={(event) =>
+                                        setConfigMaxValueFee(event.target.value)
+                                    }
+                                    decimalCharacter="."
+                                    digitGroupSeparator=""
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => handleFeeSave()}
+                                >
+                                    Salvar
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleFeeDialogClose}>Fechar</Button>
                     </DialogActions>
                 </Dialog>
                 <Box sx={{ flexGrow: 1 }}>
@@ -259,12 +518,7 @@ export const ConversionPage = () => {
                                     textDecoration: "none",
                                 }}
                             >
-                                <img
-                                    src={
-                                        "http://localhost:3000/img/oliveira_trust.png"
-                                    }
-                                    alt="loading..."
-                                />
+                                <img src={logo} alt="loading..." />
                             </Typography>
                             <IconButton
                                 size="large"
@@ -298,7 +552,7 @@ export const ConversionPage = () => {
                                         aria-label="text button group"
                                     >
                                         <Button
-                                            onClick={handleLogout}
+                                            onClick={handleFeeDialogClose}
                                             variant="text"
                                         >
                                             Taxas
@@ -308,7 +562,7 @@ export const ConversionPage = () => {
                                             onClick={handleLogout}
                                             variant="text"
                                         >
-                                            Deslogar
+                                            Sair
                                         </Button>
                                         <Button
                                             onClick={() => null}
@@ -342,11 +596,6 @@ export const ConversionPage = () => {
                         >
                             <Card variant="outlined">
                                 <CardContent>
-                                    <Grid item xs={12}>
-                                        <Div>
-                                            {`Taxa de ${minValueFee}% para valores abaixo de R$3000.00 e para valores acima de R$3000.00 ${maxValueFee}%`}
-                                        </Div>
-                                    </Grid>
                                     <Grid container xs={12} spacing={3}>
                                         <Grid item xs={4}>
                                             <FormControl
@@ -364,7 +613,7 @@ export const ConversionPage = () => {
                                                     disabled={true}
                                                     label="Moeda de Origem"
                                                     onChange={(event) =>
-                                                        handleCurrencyChange(
+                                                        setCurrency(
                                                             event.target.value
                                                         )
                                                     }
@@ -386,52 +635,11 @@ export const ConversionPage = () => {
                                                 fullWidth
                                                 sx={{ m: 1 }}
                                             >
-                                                <InputLabel htmlFor="outlined-adornment-amount">
-                                                    Moeda de Destino
-                                                </InputLabel>
-                                                <Select
-                                                    labelId="demo-simple-select-label"
-                                                    id="demo-simple-select"
-                                                    value={currency}
-                                                    variant="standard"
-                                                    label="Moeda de Destino"
-                                                    onChange={(event) =>
-                                                        handleCurrencyChange(
-                                                            event.target.value
-                                                        )
-                                                    }
-                                                >
-                                                    {currencies.map(
-                                                        (currency) => {
-                                                            return (
-                                                                <MenuItem
-                                                                    value={
-                                                                        currency.code +
-                                                                        ";" +
-                                                                        currency.symbol
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        currency.code
-                                                                    }
-                                                                </MenuItem>
-                                                            );
-                                                        }
-                                                    )}
-                                                </Select>
-                                            </FormControl>
-                                        </Grid>
-                                        <Grid item xs={4}>
-                                            <FormControl
-                                                fullWidth
-                                                sx={{ m: 1 }}
-                                            >
                                                 <CurrencyTextField
                                                     label={`Valor a ser convertido`}
                                                     fullWidth
                                                     variant="standard"
                                                     value={amount}
-                                                    disabled={currency === ""}
                                                     currencySymbol={"R$"}
                                                     outputFormat="number"
                                                     onChange={(event) =>
@@ -444,6 +652,45 @@ export const ConversionPage = () => {
                                                 />
                                             </FormControl>
                                         </Grid>
+                                        <Grid item xs={4}>
+                                            <FormControl
+                                                fullWidth
+                                                sx={{ m: 1 }}
+                                            >
+                                                <InputLabel htmlFor="outlined-adornment-amount">
+                                                    Moeda de Destino
+                                                </InputLabel>
+                                                <Select
+                                                    labelId="demo-simple-select-label"
+                                                    id="demo-simple-select"
+                                                    value={currency}
+                                                    variant="standard"
+                                                    label="Moeda de Destino"
+                                                    onChange={(event) =>
+                                                        setCurrency(
+                                                            event.target.value
+                                                        )
+                                                    }
+                                                >
+                                                    {currencies.map(
+                                                        (currency) => {
+                                                            return (
+                                                                <MenuItem
+                                                                    value={
+                                                                        currency.code
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        currency.code
+                                                                    }
+                                                                </MenuItem>
+                                                            );
+                                                        }
+                                                    )}
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+
                                         <Grid item xs={12}>
                                             <FormControl
                                                 fullWidth
@@ -479,6 +726,10 @@ export const ConversionPage = () => {
                                             <Button
                                                 fullWidth
                                                 variant="contained"
+                                                disabled={handleDisabledMakeCotation()}
+                                                onClick={() =>
+                                                    handleMakeCotation()
+                                                }
                                             >
                                                 Realizar cotação
                                             </Button>
@@ -486,40 +737,136 @@ export const ConversionPage = () => {
                                         <Grid item xs={12}>
                                             <hr />
                                         </Grid>
-
-                                        <Grid
-                                            justifyContent="flex-end"
-                                            container
-                                            xs={12}
-                                        >
+                                    </Grid>
+                                    {cotation.originCurrency !== "" && (
+                                        <Grid container xs={12}>
                                             <table
-                                                style={{ textAlign: "left" }}
+                                                style={{
+                                                    textAlign: "left",
+                                                }}
                                             >
                                                 <tbody>
                                                     <tr>
-                                                        <th>Preço: </th>
-                                                        <td>R$ {amount}</td>
+                                                        <th>
+                                                            Moeda de origem:
+                                                        </th>
+                                                        <td>
+                                                            {
+                                                                cotation.originCurrency
+                                                            }
+                                                        </td>
                                                     </tr>
                                                     <tr>
                                                         <th>
-                                                            Taxa da Forma de
-                                                            Pagamento:
+                                                            Moeda de destino:
                                                         </th>
-                                                        <td>R$</td>
+                                                        <td>
+                                                            {
+                                                                cotation.destinationCurrency
+                                                            }
+                                                        </td>
                                                     </tr>
                                                     <tr>
                                                         <th>
-                                                            Taxa de valor
-                                                            minimo:
+                                                            Valor para
+                                                            Conversão:
                                                         </th>
-                                                        <td>R$ </td>
+                                                        <td>
+                                                            {
+                                                                cotation.conversionAmount
+                                                            }
+                                                        </td>
                                                     </tr>
                                                     <tr>
-                                                        <th>Total:</th>
-                                                        <td>R$ </td>
+                                                        <th>
+                                                            Forma de pagamento:
+                                                        </th>
+                                                        <td>
+                                                            {
+                                                                cotation.paymentMethod
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Valor da moeda de
+                                                            destino usado para
+                                                            conversão:
+                                                        </th>
+                                                        <td>
+                                                            {
+                                                                cotation.currencyDestinyValue
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Valor comprado:</th>
+                                                        <td>
+                                                            {
+                                                                cotation.purchaseAmount
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Taxa de pagamento:
+                                                        </th>
+                                                        <td>
+                                                            {
+                                                                cotation.paymentMethodFee
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Taxa de conversão:
+                                                        </th>
+                                                        <td>
+                                                            {
+                                                                cotation.conversionFee
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Valor utilizado para
+                                                            conversão
+                                                            descontando as
+                                                            taxas:
+                                                        </th>
+                                                        <td>
+                                                            {
+                                                                cotation.conversionWithFee
+                                                            }
+                                                        </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
+                                        </Grid>
+                                    )}
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12}>
+                                            <ul>
+                                                <li>
+                                                    <Div>
+                                                        {`Taxa de ${minValueFee}% para valores abaixo de R$3000.00 e para valores acima de R$3000.00 ${maxValueFee}%`}
+                                                    </Div>
+                                                </li>
+                                                <li>
+                                                    <Div>
+                                                        Valor minimo de
+                                                        R$1000.00 e valor máximo
+                                                        de R$100000.00
+                                                    </Div>
+                                                </li>
+                                                <li>
+                                                    <Div>
+                                                        É necessário estar
+                                                        logado para fazer a
+                                                        cotação
+                                                    </Div>
+                                                </li>
+                                            </ul>
                                         </Grid>
                                     </Grid>
                                 </CardContent>

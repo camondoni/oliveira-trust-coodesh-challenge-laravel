@@ -21,7 +21,7 @@
                 <td>{{ $mailData['destinationCurrency'] }}</td>
             </tr>
             <tr>
-                <th>Moeda de destino: </th>
+                <th>Valor para Conversão: </th>
                 <td>{{ $mailData['conversionAmount'] }}</td>
             </tr>
             <tr>
@@ -35,10 +35,6 @@
             <tr>
                 <th>Valor comprado: </th>
                 <td>{{ $mailData['purchaseAmount'] }}</td>
-            </tr>
-            <tr>
-                <th>Taxa de pagamento: </th>
-                <td>{{ $mailData['paymentMethodFee'] }}</td>
             </tr>
             <tr>
                 <th>Taxa de pagamento: </th>
