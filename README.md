@@ -20,7 +20,7 @@ essa taxa deve ser aplicada apenas no valor da compra e não sobre o valor já c
 -   React v18.1.0
 
 # Pré Requisitos
--   PHP 8.1
+-   PHP >= 8.1
 -   NPM
 -   Yarn
 -   Composer
