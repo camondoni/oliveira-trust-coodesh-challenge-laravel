@@ -89,7 +89,7 @@ class MakeCotationService
         }
     }
 
-    private function sendCotationEmail($cotation)
+    private function sendCotationEmail($cotation): void
     {
         $user = Auth::user();
         $mailData = array_merge(array(

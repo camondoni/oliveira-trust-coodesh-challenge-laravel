@@ -36,5 +36,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 Route::get('cotation_fee', [GetCotationFeeController::class, 'execute']);
-Route::put('cotation_fee', [UpdateCotationFeeController::class, 'execute']);
+Route::put('cotation_fee', [UpdateCotationFeeController::class, 'execute'])->middleware('auth');
 Route::post('make_cotation', [MakeCotationController::class, 'execute'])->middleware('auth');
